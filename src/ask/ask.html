@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:">
+  <title>Capri · ask</title>
+  <link rel="stylesheet" href="ask.css">
+</head>
+<body>
+  <main class="ask">
+    <header class="ask__bar">
+      <span class="ask__who">CAPRI</span>
+      <span class="ask__hint">Enter send · Shift+Enter new line · Esc close · /reset new conversation</span>
+    </header>
+    <textarea id="q" class="ask__input" rows="2" autofocus spellcheck="false"
+              placeholder="Ask the router…"></textarea>
+  </main>
+  <script src="ask.js"></script>
+</body>
+</html>

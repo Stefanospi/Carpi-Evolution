@@ -287,6 +287,9 @@ async function boot() {
       case 'status':
         brain.status();
         break;
+      case 'ask': // a question sent to the router from her input box: its answer is shown whole
+        brain.askPending = Boolean(cmd.on);
+        break;
       case 'welcome': // "How does it work?" in her menu
         guide.menu();
         break;

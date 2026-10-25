@@ -10,6 +10,7 @@ const {
 const config = require('./config');
 const { TRAY, LANGS } = require('./labels');
 const { createBridge } = require('./bridge');
+const { createAsk } = require('./ask');
 const { startWindowWatch } = require('./windows');
 const hooks = require('../../scripts/install-hooks');
 const demoSteps = require('../../scripts/demo-sequence');
@@ -29,6 +30,7 @@ let tray = null;
 let trayMenu = null; // also what she opens when you right-click her
 let demoTimer = null;
 let windowWatch = null;
+let ask = null;
 // the watcher only speaks when something changes: the overlay asks for this when it (re)loads
 let lastWindows = null;
 
@@ -195,6 +197,7 @@ function rebuildTray() {
     { label: t.teleport, click: () => sendCommand('teleport') },
     { label: t.satellite, click: () => sendCommand('satellite') },
     { label: t.demo, click: playDemo },
+    { label: `Ask the router…  (${cfg.askShortcut})`, click: () => ask?.toggle() },
     { label: t.help, click: () => sendCommand('welcome') },
     { label: cfg.visible ? t.hide : t.show, accelerator: 'Ctrl+Alt+C', click: () => toggleVisible() },
     { type: 'separator' },
@@ -416,12 +419,22 @@ function main() {
         overlay?.webContents.send('windows:update', data);
       },
     });
+    ask = createAsk({
+      config,
+      targetDisplay,
+      sendCommand,
+      sendEvent: (evt) => overlay?.webContents.send('claude:event', evt),
+    });
+    ask.register();
     createBridge({
       port: PORT,
       onEvent: (evt) => overlay?.webContents.send('claude:event', evt),
       onDebug: DEV ? debugHandler : null,
     });
     globalShortcut.register('Control+Alt+C', () => toggleVisible());
+    if (!globalShortcut.register(config.load().askShortcut, () => ask.toggle())) {
+      console.error(`[capri] shortcut ${config.load().askShortcut} is taken: use the tray menu to ask the router`);
+    }
     screen.on('display-metrics-changed', fitOverlay);
     screen.on('display-added', () => { fitOverlay(); rebuildTray(); });
     screen.on('display-removed', () => { fitOverlay(); rebuildTray(); });

@@ -5,6 +5,14 @@ import { pick, fmt, duration, basename } from './util.js';
 
 const EDIT_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 const HACKING_TOOLS = new Set(['Bash', 'PowerShell', 'WebFetch', 'WebSearch', 'Agent', 'Task']);
+// what she says when she hands you the answer to a question you typed to her (not Claude's)
+const ASK_REPLY = {
+  en: ['Here you go:', 'Got it. Here:', 'Done. Take a look:'],
+  fr: ['Voilà :', 'Voici ta réponse :', 'C’est fait :'],
+  es: ['Aquí tienes:', 'Listo:', 'Mira esto:'],
+  pt: ['Aqui está:', 'Pronto:', 'Olha só:'],
+  ru: ['Вот ответ:', 'Готово:', 'Смотри:'],
+};
 const WORKING_EVERY = 20; // say something about progress every N tool calls
 const LONG_JOB_MS = 8 * 60 * 1000; // a job this long (or this busy) earns the whole satellite sequence
 const LONG_JOB_ACTIONS = 50;
@@ -19,6 +27,7 @@ export class Brain {
     this.sessions = new Map();
     this.replyFor = null;    // the session whose answer she's holding up for you
     this.linked = true;      // has a Claude Code event ever reached her (app.js sets it from the config)
+    this.askPending = false; // a question typed in her own input box is out: show its answer whole
     this.onLinked = null;
     this.onShowcase = null; // the demo's second half (app.js)
   }
@@ -191,10 +200,13 @@ export class Brain {
     }
     // Not on Claude's window any more: you can't see the answer, so she brings it to you, whole,
     // and holds it up until you're back on Claude's window or click it away.
-    const reply = this.away(s) ? readable(evt.last_assistant_message || '') : '';
+    // A question from her own input box is always shown whole: you asked her, not a window.
+    const asked = this.askPending;
+    this.askPending = false;
+    const reply = asked || this.away(s) ? readable(evt.last_assistant_message || '') : '';
     const done = (extra) => {
-      if (reply) this.replyFor = s;
-      if (reply) this.say('done', pick(this.t.reply), s, { ...extra, reply, hold: null });
+      if (reply) this.replyFor = asked ? null : s;
+      if (reply) this.say('done', pick(asked ? ASK_REPLY[this.lang] || ASK_REPLY.en : this.t.reply), s, { ...extra, reply, hold: null });
       else this.say('done', pick(this.t.done), s, { ...extra, quote: clip(quote, 150) });
     };
     if (!wasWorking && !s.count) {
@@ -230,6 +242,7 @@ export class Brain {
 
   onStopFailure(evt, s) {
     s.working = false;
+    this.askPending = false;
     if (!this.busySessions.length) {
       this.panel.setTicker(null);
       this.capri.setMode('idle');

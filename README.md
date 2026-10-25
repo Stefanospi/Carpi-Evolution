@@ -181,6 +181,22 @@ zapping your pointer, the whole satellite sequence, possessing a window (a littl
 under her and she falls), sleeping down to her mask, and putting herself away in the bottom-left corner.
 It's also in the tray menu.
 
+## Ask the router (personal fork)
+
+This fork can also be the front end of a personal AI router (`Sistema_AI`, OpenAI-compatible, on `127.0.0.1:8000`).
+
+1. Start the router: `python server.py` (with the Capri bridge patch applied, so she also reacts while it works).
+2. Start her: `npm start`.
+3. **Ctrl+Alt+Space** (or tray › *Ask the router…*) opens a small input box. Enter sends, Shift+Enter adds a line, Esc closes.
+   `/reset` starts a new conversation.
+4. She works while the router tries its models, then shows you the whole answer in her panel (click it to close).
+
+Settings live in her `config.json` (in her user data folder): `routerUrl`, `routerToken` (or the `ROUTER_API_TOKEN`
+environment variable), `askModel` (`router-auto`, or `router-coding`, `router-appunti`… to force a category),
+`askShortcut`. The conversation is kept in memory only, last 10 exchanges; the router itself keeps none in this mode.
+
+`npm test` runs the tests for the router client and her answer panel.
+
 ## Sounds
 
 Every sound is synthesized live (Web Audio), nothing copyrighted ships with the repo.
