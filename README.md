@@ -195,7 +195,9 @@ Settings live in her `config.json` (in her user data folder): `routerUrl`, `rout
 environment variable), `askModel` (`brain-auto` = Claude with the level picked by the router's policy, or
 `brain-basso`, `brain-medio`, `brain-alto` to force one),
 `askShortcut`. The conversation lives in the router (session `capri`): each request carries only the new message, and
-`/reset` makes the router forget it. The answer is written into her panel as it arrives; close the panel and it stays closed,
+`/reset` makes the router forget it.
+`/converti "C:\\path\\file.docx" pdf` converts a file (images, docx/md/txt/html/pdf, csv/xlsx/json/yaml) with Python libraries on the router, no model
+and no tokens; the result lands next to the original and opens in Explorer. `/formati` lists what converts into what. The answer is written into her panel as it arrives; close the panel and it stays closed,
 the whole answer still comes at the end.
 
 `npm test` runs the tests for the router client and her answer panel.

@@ -10,11 +10,12 @@
 const path = require('node:path');
 const { BrowserWindow, ipcMain } = require('electron');
 const { createRouterClient } = require('./router-client');
+const { parseCommand, runCommand } = require('./commands');
 
 const WIDTH = 620;
 const HEIGHT = 112;
 
-function createAsk({ config, targetDisplay, sendEvent, sendCommand }) {
+function createAsk({ config, targetDisplay, sendEvent, sendCommand, reveal }) {
   let win = null;
 
   const settings = () => {
@@ -80,10 +81,8 @@ function createAsk({ config, targetDisplay, sendEvent, sendCommand }) {
   async function submit(raw) {
     const text = String(raw || '').trim();
     if (!text) return;
-    if (/^\/(reset|nuova)$/i.test(text)) {
-      info((await client.reset()) ? 'Conversation cleared.' : 'Could not clear it: the router is not reachable.');
-      return;
-    }
+    const cmd = parseCommand(text); // /converti, /formati, /reset: done locally, no model, no tokens
+    if (cmd) return runCommand(cmd, { client, info, failure, reveal });
     sendCommand('ask', { on: true }); // her next answer is shown whole, wherever you are
     // the answer is written into her panel as it arrives (at most ~12 updates a second)
     let lastDelta = 0;

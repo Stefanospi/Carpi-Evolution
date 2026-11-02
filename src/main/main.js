@@ -424,6 +424,7 @@ function main() {
       targetDisplay,
       sendCommand,
       sendEvent: (evt) => overlay?.webContents.send('claude:event', evt),
+      reveal: (file) => shell.showItemInFolder(file),
     });
     ask.register();
     createBridge({
