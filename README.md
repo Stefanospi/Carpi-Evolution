@@ -192,7 +192,8 @@ This fork can also be the front end of a personal AI router (`Sistema_AI`, OpenA
 4. She works while the router tries its models, then shows you the whole answer in her panel (click it to close).
 
 Settings live in her `config.json` (in her user data folder): `routerUrl`, `routerToken` (or the `ROUTER_API_TOKEN`
-environment variable), `askModel` (`router-auto`, or `router-coding`, `router-appunti`… to force a category),
+environment variable), `askModel` (`brain-auto` = Claude with the level picked by the router's policy, or
+`brain-basso`, `brain-medio`, `brain-alto` to force one),
 `askShortcut`. The conversation is kept in memory only, last 10 exchanges; the router itself keeps none in this mode.
 
 `npm test` runs the tests for the router client and her answer panel.

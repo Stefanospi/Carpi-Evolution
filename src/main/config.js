@@ -17,7 +17,7 @@ const DEFAULTS = {
   linked: false,     // a Claude Code event has reached her at least once
   routerUrl: 'http://127.0.0.1:8000', // the personal AI router (Sistema_AI, `python server.py`)
   routerToken: '',   // only if ROUTER_API_TOKEN is set on the router (or export it before starting her)
-  askModel: 'router-auto', // router-auto picks the category; router-coding, router-appunti... force one
+  askModel: 'brain-auto', // Claude, level chosen by the router's policy; brain-basso / brain-medio / brain-alto force one
   askShortcut: 'Control+Alt+Space',
 };
 
