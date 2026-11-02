@@ -81,12 +81,19 @@ function createAsk({ config, targetDisplay, sendEvent, sendCommand }) {
     const text = String(raw || '').trim();
     if (!text) return;
     if (/^\/(reset|nuova)$/i.test(text)) {
-      client.reset();
-      info('Conversation cleared.');
+      info((await client.reset()) ? 'Conversation cleared.' : 'Could not clear it: the router is not reachable.');
       return;
     }
     sendCommand('ask', { on: true }); // her next answer is shown whole, wherever you are
-    const result = await client.ask(text);
+    // the answer is written into her panel as it arrives (at most ~12 updates a second)
+    let lastDelta = 0;
+    const onDelta = (full) => {
+      const now = Date.now();
+      if (now - lastDelta < 80) return;
+      lastDelta = now;
+      sendCommand('askDelta', { text: full });
+    };
+    const result = await client.ask(text, { onDelta });
     if (result.ok) return; // the router already told her it was done (Stop event)
     sendCommand('ask', { on: false });
     // 'router' failures (every model down) already reached her as a StopFailure from the router
@@ -98,7 +105,7 @@ function createAsk({ config, targetDisplay, sendEvent, sendCommand }) {
     ipcMain.on('ask:hide', hide);
   }
 
-  return { toggle, register, reset: () => client.reset() };
+  return { toggle, register, reset: () => client.reset() }; // reset() -> Promise<boolean>
 }
 
 module.exports = { createAsk };

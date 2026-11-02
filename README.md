@@ -185,7 +185,7 @@ It's also in the tray menu.
 
 This fork can also be the front end of a personal AI router (`Sistema_AI`, OpenAI-compatible, on `127.0.0.1:8000`).
 
-1. Start the router: `python server.py` (with the Capri bridge patch applied, so she also reacts while it works).
+1. Start the router: `python server.py`. It sends her "Agent Events v1" (`src/main/agent-events.js` lists them), so she also reacts while it works.
 2. Start her: `npm start`.
 3. **Ctrl+Alt+Space** (or tray › *Ask the router…*) opens a small input box. Enter sends, Shift+Enter adds a line, Esc closes.
    `/reset` starts a new conversation.
@@ -194,7 +194,9 @@ This fork can also be the front end of a personal AI router (`Sistema_AI`, OpenA
 Settings live in her `config.json` (in her user data folder): `routerUrl`, `routerToken` (or the `ROUTER_API_TOKEN`
 environment variable), `askModel` (`brain-auto` = Claude with the level picked by the router's policy, or
 `brain-basso`, `brain-medio`, `brain-alto` to force one),
-`askShortcut`. The conversation is kept in memory only, last 10 exchanges; the router itself keeps none in this mode.
+`askShortcut`. The conversation lives in the router (session `capri`): each request carries only the new message, and
+`/reset` makes the router forget it. The answer is written into her panel as it arrives; close the panel and it stays closed,
+the whole answer still comes at the end.
 
 `npm test` runs the tests for the router client and her answer panel.
 

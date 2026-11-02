@@ -288,7 +288,10 @@ async function boot() {
         brain.status();
         break;
       case 'ask': // a question sent to the router from her input box: its answer is shown whole
-        brain.askPending = Boolean(cmd.on);
+        brain.setAsk(cmd.on);
+        break;
+      case 'askDelta': // ...and written into her panel as it arrives
+        brain.askDelta(cmd.text);
         break;
       case 'welcome': // "How does it work?" in her menu
         guide.menu();

@@ -16,14 +16,18 @@ function setup() {
     celebrate: ({ onSpeak }) => onSpeak(),
     earnUplink() {},
   };
+  const updated = [];
   const panel = {
     current: null,
+    updated,
     say: (m) => said.push(m),
+    // like the real one: only the message on screen can be updated
+    updateReply: (text) => (panel.current?.stream ? (updated.push(text), true) : false),
     hide() {}, clearKind() {}, setTicker() {}, updateLog() {},
   };
   const voice = { play() {} };
   const brain = new Brain({ capri, panel, voice, host: {}, lang: 'en' });
-  return { brain, said, capri };
+  return { brain, said, capri, panel };
 }
 
 const prompt = { hook_event_name: 'UserPromptSubmit', session_id: 'router', prompt: 'ciao' };
@@ -48,6 +52,38 @@ test('without a pending question and still on the same window: the usual short q
   const done = said.find((m) => m.kind === 'done');
   assert.equal(done.reply, undefined);
   assert.ok(done.quote);
+});
+
+test('the answer is written into her panel as it arrives, then replaced by the whole one', async () => {
+  const { brain, said, panel } = setup();
+  brain.setAsk(true);
+  brain.handle(prompt);
+  brain.askDelta('**Ci**');
+  assert.equal(said.at(-1).stream, true);
+  assert.equal(said.at(-1).reply, 'Ci');
+  panel.current = said.at(-1);
+  brain.askDelta('**Ciao** mondo');
+  assert.equal(panel.updated.at(-1), 'Ciao mondo'); // updated in place, not announced again
+  assert.equal(said.filter((m) => m.stream).length, 1);
+  await brain.handle(stop);
+  assert.equal(said.at(-1).kind, 'done');
+});
+
+test('once you close the streaming panel it stays closed', () => {
+  const { brain, said, panel } = setup();
+  brain.setAsk(true);
+  brain.askDelta('uno');
+  panel.current = null; // closed by a click
+  brain.askDelta('uno due');
+  brain.askDelta('uno due tre');
+  assert.equal(said.filter((m) => m.stream).length, 1);
+  assert.equal(panel.updated.length, 0);
+});
+
+test('deltas are ignored when no question of hers is pending', () => {
+  const { brain, said } = setup();
+  brain.askDelta('niente');
+  assert.equal(said.length, 0);
 });
 
 test('a router failure clears the pending flag', () => {

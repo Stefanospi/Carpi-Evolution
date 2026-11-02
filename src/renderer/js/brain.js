@@ -104,6 +104,28 @@ export class Brain {
     this.say('info', fmt(pick(lines), { project: s.project }), s, { face: pick(['grin', 'look']), hold: 5000 });
   }
 
+  // A question typed in her own box goes out (on) or comes back with nothing to show (off).
+  setAsk(on) {
+    this.askPending = Boolean(on);
+    this.streamShown = false;
+    this.streamClosed = false;
+  }
+
+  // The answer so far, written into her panel as it arrives. If you close the panel she stops
+  // reopening it: the whole answer still comes at the end.
+  askDelta(text) {
+    if (!this.askPending || this.streamClosed) return;
+    const reply = readable(text);
+    if (!reply) return;
+    if (this.panel.updateReply?.(reply)) return;
+    if (this.streamShown) {
+      this.streamClosed = true;
+      return;
+    }
+    this.streamShown = true;
+    this.panel.say({ kind: 'work', line: '', reply, stream: true, hold: null, tag: 'router' });
+  }
+
   onPrompt(evt, s) {
     // the window in front when you send a prompt is the one you typed it in: Claude's
     const window = this.capri.windows.fg || null;

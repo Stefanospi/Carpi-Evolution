@@ -4,6 +4,7 @@
 // we hand it to the overlay. Bound to 127.0.0.1 only.
 
 const http = require('node:http');
+const { toHookEvent } = require('./agent-events');
 
 const MAX_BODY = 512 * 1024;
 
@@ -51,10 +52,8 @@ function createBridge({ port, onEvent, onDebug }) {
 
     if (req.method === 'POST' && url.pathname === '/event') {
       try {
-        const evt = await readJson(req);
-        if (!evt || typeof evt !== 'object' || typeof evt.hook_event_name !== 'string') {
-          return send(res, 400, { ok: false, error: 'missing hook_event_name' });
-        }
+        const evt = toHookEvent(await readJson(req));
+        if (!evt) return send(res, 400, { ok: false, error: 'missing hook_event_name or unknown agent event' });
         onEvent(evt);
         return send(res, 200, { ok: true });
       } catch (err) {

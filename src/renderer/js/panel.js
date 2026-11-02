@@ -117,6 +117,19 @@ export class Panel {
     return true;
   }
 
+  // The answer being written: replace the text of the streaming message on screen (message.stream),
+  // following the end of it. false when that message isn't on screen any more.
+  updateReply(text) {
+    if (!this.current?.stream || !this.visible) return false;
+    this.current.reply = text;
+    this.reply.textContent = text;
+    this.reply.hidden = false;
+    this.el.classList.add('has-reply');
+    this.reply.scrollTop = this.reply.scrollHeight;
+    this.place();
+    return true;
+  }
+
   // Change her expression; the swap glitches across a couple of drawings.
   setFace(name) {
     const src = FACE_DIR + (FACES[name] || FACES.grin);
