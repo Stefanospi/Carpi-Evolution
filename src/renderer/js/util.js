@@ -50,3 +50,15 @@ export function tween(target, to, ms, easing = ease.out) {
     requestAnimationFrame(tick);
   });
 }
+
+// A shell command as a short label: no "cd x &&" or "VAR=..." in front, long paths cut to their last
+// part, only the first command of a chain. `S="C:/a/b/c" ; node tour.js ok` -> "node tour.js ok"
+export function commandLabel(command = '') {
+  const prefix = /^(?:cd\s+(?:"[^"]*"|'[^']*'|\S+)\s*(?:&&|;)\s*|(?:\$\w+|\w+)\s*=\s*(?:"[^"]*"|'[^']*'|\S+)\s*(?:&&|;)?\s*)/;
+  let c = String(command).trim();
+  for (let next = c.replace(prefix, ''); next !== c; next = c.replace(prefix, '')) c = next;
+  const first = c.split('\n')[0].split(/\s*(?:&&|\|\||\||;)\s*/)[0];
+  const words = first.split(/\s+/).filter(Boolean).slice(0, 3)
+    .map((w) => (/[\\/]/.test(w) ? basename(w.replace(/^["']|["']$/g, '')) : w));
+  return words.join(' ');
+}

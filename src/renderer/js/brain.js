@@ -1,7 +1,7 @@
 // Turns Claude Code hook events into things Capri says and does.
 
 import { LINES } from './lines.js';
-import { pick, fmt, duration, basename } from './util.js';
+import { pick, fmt, duration, basename, commandLabel } from './util.js';
 
 const EDIT_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 const HACKING_TOOLS = new Set(['Bash', 'PowerShell', 'WebFetch', 'WebSearch', 'Agent', 'Task']);
@@ -344,7 +344,7 @@ export class Brain {
       case 'NotebookEdit':
         target = basename(input.notebook_path); break;
       case 'Bash': case 'PowerShell':
-        target = input.description || input.command; break;
+        target = input.description || commandLabel(input.command); break;
       case 'Grep':
         target = input.pattern ? `“${input.pattern}”` : ''; break;
       case 'Glob':
