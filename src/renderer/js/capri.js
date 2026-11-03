@@ -424,8 +424,9 @@ export class Capri {
     const seat = this.pickSeat();
     const r = Math.random();
     if (seat && r < 0.35) this.sitOn(seat);
-    else if (r < 0.6) this.peek();
-    else if (r < 0.85) this.teleport(this.spot('random'));
+    else if (r < 0.55) this.peek();
+    else if (r < 0.7) this.sprint();
+    else if (r < 0.88) this.teleport(this.spot('random'));
     else this.flourish();
   }
 
@@ -757,6 +758,44 @@ export class Capri {
       case 'stare': // every eye she has, on you
         this.fx.cutin(...this.cutinAt(this.act?.player.dir || this.towardCenter()), { kind: 'many', life: 640 });
         break;
+      case 'sande-on': // time slows: a hard ring, manga lines, shards pulled in, a flash
+        this.voice.play('charge');
+        this.fx.ring(h.x, h.y + 60 * s, { size: 0.8 });
+        this.fx.lines(h.x, h.y + 40 * s, { inner: 120 * s + 30, life: 520 });
+        this.fx.burst(h.x, h.y + 60 * s, { count: 16, inward: true, power: 0.6, spread: 130 * s });
+        this.flash([INK, RED, INK]);
+        break;
+      case 'sande-off':
+        this.voice.play('tick');
+        this.fx.ring(h.x, h.y + 60 * s, { size: 0.35 });
+        this.fx.slices(h.x - 70 * s, h.y - 20 * s, 170 * s, 300 * s, { count: 4 });
+        break;
+      case 'sprint-on':
+        this.voice.play('rise');
+        this.fx.burst(this.pos.x, this.pos.y - 20 * s, { count: 10, power: 0.7, spread: 80 * s });
+        break;
+      case 'sprint-off':
+        this.voice.play('tick');
+        this.fx.ring(this.pos.x, this.pos.y - 30 * s, { size: 0.3 });
+        break;
+      case 'psy-on': // the system rejects her: red flash, glitch, every eye open
+        this.voice.play('error');
+        this.p.glitchSeed = Math.random() * 100;
+        tween(this.p, { glitch: 0.55, split: 6 }, 90, ease.out);
+        this.flash([RED, INK]);
+        this.fx.cutin(...this.cutinAt(this.towardCenter()), { kind: 'many', life: 900 });
+        this.fx.slices(h.x - 70 * s, h.y - 40 * s, 170 * s, 320 * s, { count: 6 });
+        break;
+      case 'psy-tic':
+        this.p.glitchSeed = Math.random() * 100;
+        this.voice.play('tick');
+        this.fx.slices(h.x - 70 * s, h.y - 20 * s, 150 * s, 280 * s, { count: 3, life: 120 });
+        this.twitch();
+        break;
+      case 'psy-off':
+        tween(this.p, { glitch: 0, split: 0 }, 420, ease.out);
+        this.fx.ring(h.x, h.y + 40 * s, { size: 0.3 });
+        break;
       case 'notice':
         this.twitch();
         break;
@@ -893,6 +932,41 @@ export class Capri {
     const fn = this.onSpeak;
     this.onSpeak = null;
     fn?.();
+  }
+
+  // The Sandevistan, in place: she slows the world down and her copies stretch out around her.
+  async sandevistan() {
+    if (this.busy || this.hidden || this.stowed || this.dormant || reducedMotion.matches) return;
+    await this.perform('sandevistan', this.towardCenter());
+  }
+
+  // Too many failures in a row: cyberpsychosis. Glitches, flickering copies, then she breathes out.
+  async psycho() {
+    if (this.hidden || this.stowed || this.dormant || reducedMotion.matches) return this.hurt();
+    await this.perform('psycho');
+    this.p.glitch = 0;
+    this.p.split = 0;
+  }
+
+  // A sprint across the floor on her own, her copies dragging behind her.
+  async sprint() {
+    if (this.busy || this.hidden || this.stowed || this.dormant || this.dragging || this.stance !== 'stand' || reducedMotion.matches) return;
+    const to = this.spot('random');
+    to.y = this.pos.y;
+    const dir = to.x > this.pos.x ? 1 : -1;
+    this.busy = true;
+    this.wake();
+    const run = this.perform('sprint', dir);
+    await sleep(110);
+    const s = this.scale;
+    const trail = setInterval(() => {
+      const h = this.head();
+      this.fx.streak(h.x - dir * 60 * s, h.y + rand(0, 160) * s, h.x - dir * (150 * s + 40), h.y + rand(0, 160) * s, { life: 110 });
+    }, 50);
+    await tween(this.pos, { x: to.x }, 320, ease.inOut);
+    clearInterval(trail);
+    await run;
+    await this.settle();
   }
 
   async hurt() {

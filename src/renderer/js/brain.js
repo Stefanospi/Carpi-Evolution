@@ -4,6 +4,7 @@ import { LINES } from './lines.js';
 import { pick, fmt, duration, basename, commandLabel } from './util.js';
 
 const EDIT_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
+const PSYCHO_AFTER = 3; // failures in a row before she loses it
 const HACKING_TOOLS = new Set(['Bash', 'PowerShell', 'WebFetch', 'WebSearch', 'Agent', 'Task']);
 // what she says when she hands you the answer to a question you typed to her (not Claude's)
 const ASK_REPLY = {
@@ -88,6 +89,7 @@ export class Brain {
       case 'SessionStart': return this.onSessionStart(evt, s);
       case 'UserPromptSubmit': return this.onPrompt(evt, s);
       case 'PreToolUse': return this.onTool(evt, s);
+      case 'PostToolUse': s.fails = 0; return undefined;
       case 'PostToolUseFailure': return this.onToolFailure(evt, s);
       case 'Notification': return this.onNotification(evt, s);
       case 'Stop': return this.onStop(evt, s);
@@ -171,7 +173,11 @@ export class Brain {
     // "Exit code 1" says nothing; the next line usually does
     const lines = String(evt.error || '').split('\n').map((l) => l.trim()).filter(Boolean);
     const firstLine = lines.find((l) => !/^exit code \d+$/i.test(l)) || lines[0] || '';
-    this.capri.hurt();
+    s.fails = (s.fails || 0) + 1;
+    if (s.fails >= PSYCHO_AFTER) {
+      s.fails = 0;
+      this.capri.psycho();
+    } else this.capri.hurt();
     this.voice.play('error');
     this.say('error', fmt(pick(this.t.error), { tool: evt.tool_name || 'outil' }), s, {
       face: pick(['laugh', 'wide']), // a failure: she laughs at the chaos, or it caught her off guard
@@ -304,6 +310,7 @@ export class Brain {
   onSubagent(evt, s, starting) {
     const agent = evt.agent_type || 'agent';
     const line = fmt(pick(starting ? this.t.subagentStart : this.t.subagentStop), { agent });
+    if (starting) this.capri.sandevistan(); // the subagent is a second mind: she speeds up
     const action = { verb: starting ? '↗' : '↘', target: line };
     s.log.push(action);
     this.panel.setTicker(action);

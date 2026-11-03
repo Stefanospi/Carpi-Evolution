@@ -429,7 +429,60 @@ export const ACTS = {
       [2, { sy: 1.1, sx: 0.93, mane: 0.26, head: -0.04, smear: [0, -12], armL: 0.55, armR: 0.82 }],
     ],
   },
+
+  // The Sandevistan: she coils, the world slows down. Her copies stretch far out on both sides and
+  // shimmer, the mane bristles, and she snaps back as time catches up.
+  sandevistan: {
+    priority: 3,
+    directional: true,
+    fps: 24,
+    keys: [
+      [3, { sx: 1.05, sy: 0.93, mane: -0.2, arms: -0.35, bob: 3, tilt: -2 }, 'sande-on'],
+      [1, { echo: [26, 0], smear: [-16, 0], mane: 0.3, head: 0.1, tilt: 3, arms: 0.2 }],
+      [2, { echo: [58, -2], mane: 0.36, head: 0.12, tilt: 3.5, arms: 0.34, bob: -2 }],
+      ...rep(9, [[1, { echo: [66, -3], mane: 0.38, head: 0.13, tilt: 3.5, arms: 0.36, bob: -3 }], [2, { echo: [40, 2], mane: 0.3, head: 0.1, tilt: 3, arms: 0.3, bob: -2 }]]),
+      [2, { echo: [22, 0], mane: 0.2, head: 0.06, arms: 0.12 }],
+      [1, { echo: [4, 0], sx: 1.07, sy: 0.94, mane: 0.1 }, 'sande-off'],
+      [2, { sx: 0.97, sy: 1.03, mane: 0.02 }],
+      [1, {}],
+    ],
+  },
+
+  // The sprint, short: the body leans into it and her copies trail behind (capri.js moves her).
+  sprint: {
+    priority: 3,
+    directional: true,
+    fps: 24,
+    keys: [
+      [2, { sx: 0.92, sy: 1.06, mane: -0.22, arms: -0.5, tilt: -4, bob: 2 }, 'sprint-on'],
+      [9, { echo: [72, 0], smear: [-24, 0], mane: 0.32, head: 0.1, tilt: 7, arms: 0.5, bob: -2 }],
+      [2, { echo: [26, 0], sx: 1.08, sy: 0.92, mane: 0.14, tilt: 2 }, 'sprint-off'],
+      [3, { mane: 0.04, sx: 0.98, sy: 1.02 }],
+      [1, {}],
+    ],
+  },
+
+  // Cyberpsychosis: too many failures. She twitches, copies flicker on and off, the eyes multiply, and
+  // she comes back to herself with a long breath out.
+  psycho: {
+    priority: 3,
+    fps: 24,
+    keys: [
+      [1, { mane: 0.42, head: 0.14, arms: 0.4, echo: [10, 0], sx: 1.04, sy: 0.97 }, 'psy-on'],
+      ...rep(4, [
+        [1, { mane: 0.2, head: -0.18, arms: 0.2, echo: [28, -3], bob: -2 }, 'psy-tic'],
+        [2, { mane: 0.44, head: 0.2, arms: 0.45, echo: [-24, 3], bob: 1, tilt: 2 }],
+        [1, { mane: 0.3, head: -0.06, arms: 0.3, echo: [6, 0], smear: [10, 0] }],
+        [2, { mane: 0.4, head: 0.16, arms: 0.4, echo: [34, 2], bob: -1, tilt: -2 }, 'psy-tic'],
+      ]),
+      [3, { mane: 0.1, head: 0.1, arms: 0.1, echo: [12, 0] }],
+      [8, { mane: -0.14, head: 0.2, arms: -0.32, bob: 4, tilt: 1 }, 'psy-off'], // the breath out
+      [4, { mane: -0.04, head: 0.1, arms: -0.12, bob: 2 }],
+      [1, {}],
+    ],
+  },
 };
+
 
 export class Player {
   constructor(name, { dir = 0, reach = 1, at = performance.now() } = {}) {
