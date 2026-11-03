@@ -197,7 +197,13 @@ environment variable), `askModel` (`brain-auto` = Claude with the level picked b
 `askShortcut`. The conversation lives in the router (session `capri`): each request carries only the new message, and
 `/reset` makes the router forget it.
 `/converti "C:\\path\\file.docx" pdf` converts a file (images, docx/md/txt/html/pdf, csv/xlsx/json/yaml) with Python libraries on the router, no model
-and no tokens; the result lands next to the original and opens in Explorer. `/formati` lists what converts into what. The answer is written into her panel as it arrives; close the panel and it stays closed,
+and no tokens; the result lands next to the original and opens in Explorer. `/formati` lists what converts into what.
+
+**`/schermo where do I save this?`** (Windows): she looks at the window you were in when you opened the box and answers, then
+goes to the control she means and points at it for 20 seconds. She reads the window's controls through UI Automation (names and
+positions only, never what's typed in a field; password fields are skipped). If the app shows few controls (Chrome, VS Code, games),
+she also sends a screenshot of that single window; `/schermo+ ...` forces the screenshot. Nothing is looked at until you ask,
+and it always goes to Claude, never to a free model. Needs the router (`python server.py`). The answer is written into her panel as it arrives; close the panel and it stays closed,
 the whole answer still comes at the end.
 
 `npm test` runs the tests for the router client and her answer panel.

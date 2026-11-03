@@ -15,8 +15,9 @@ const { parseCommand, runCommand } = require('./commands');
 const WIDTH = 620;
 const HEIGHT = 112;
 
-function createAsk({ config, targetDisplay, sendEvent, sendCommand, reveal }) {
+function createAsk({ config, targetDisplay, sendEvent, sendCommand, reveal, screen, getForeground }) {
   let win = null;
+  let targetWindow = null; // the window in front when the box opened: what /schermo looks at
 
   const settings = () => {
     const cfg = config.load();
@@ -69,6 +70,7 @@ function createAsk({ config, targetDisplay, sendEvent, sendCommand, reveal }) {
   function toggle() {
     if (!win) build();
     if (win.isVisible()) return hide();
+    targetWindow = getForeground?.() || null; // before the box takes the focus
     place();
     win.show();
     win.focus();
@@ -82,7 +84,7 @@ function createAsk({ config, targetDisplay, sendEvent, sendCommand, reveal }) {
     const text = String(raw || '').trim();
     if (!text) return;
     const cmd = parseCommand(text); // /converti, /formati, /reset: done locally, no model, no tokens
-    if (cmd) return runCommand(cmd, { client, info, failure, reveal });
+    if (cmd) return runCommand(cmd, { client, info, failure, reveal, screen, target: () => targetWindow, sendCommand, sendEvent });
     sendCommand('ask', { on: true }); // her next answer is shown whole, wherever you are
     // the answer is written into her panel as it arrives (at most ~12 updates a second)
     let lastDelta = 0;

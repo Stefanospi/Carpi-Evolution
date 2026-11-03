@@ -10,7 +10,7 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "demo": "node scripts/demo.js",
-    "test": "node --test tests/router-client.test.js tests/agent-events.test.js tests/commands.test.js tests/brain-ask.test.mjs",
+    "test": "node --test tests/router-client.test.js tests/agent-events.test.js tests/commands.test.js tests/screen.test.js tests/brain-ask.test.mjs",
     "hooks:install": "node scripts/install-hooks.js",
     "hooks:uninstall": "node scripts/install-hooks.js --uninstall",
     "dist": "electron-builder --win"
@@ -47,7 +47,8 @@
     ],
     "asarUnpack": [
       "hooks/**",
-      "src/main/windows.ps1"
+      "src/main/windows.ps1",
+      "src/main/uia.ps1"
     ],
     "win": {
       "target": "nsis",

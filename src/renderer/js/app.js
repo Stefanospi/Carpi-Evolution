@@ -293,6 +293,9 @@ async function boot() {
       case 'askDelta': // ...and written into her panel as it arrives
         brain.askDelta(cmd.text);
         break;
+      case 'screenTarget': // /schermo: where on the screen she'll point once she has the answer (rect: overlay px)
+        brain.screenTarget = cmd.rect ? { rect: cmd.rect, label: cmd.label || '' } : null;
+        break;
       case 'welcome': // "How does it work?" in her menu
         guide.menu();
         break;

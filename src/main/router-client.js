@@ -132,6 +132,29 @@ function createRouterClient({ getSettings, fetchImpl = globalThis.fetch }) {
     }
   }
 
+  // Ask about a window: its controls (and maybe a screenshot) go to Claude, which picks one to point at.
+  // -> { ok: true, text, target } | { ok: false, kind: 'auth' | 'router' | 'invalid' | 'offline', error }
+  async function screenAsk(payload) {
+    const s = getSettings();
+    try {
+      const res = await fetchImpl(endpoint(s, '/v1/screen/ask'), {
+        method: 'POST',
+        headers: headersFor(s),
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.status === 401) return { ok: false, kind: 'auth', error: 'Router token rejected (ROUTER_API_TOKEN).' };
+      if (!res.ok) {
+        const message = data?.error?.message || (Array.isArray(data?.detail) ? 'Invalid request.' : data?.detail);
+        return { ok: false, kind: res.status >= 500 ? 'router' : 'invalid', status: res.status, error: message || `Router answered ${res.status}.` };
+      }
+      return { ok: true, text: String(data?.text || ''), target: data?.target || null };
+    } catch (err) {
+      return { ok: false, kind: 'offline', error: unreachable(s, err) };
+    }
+  }
+
   // -> the formats you can convert from and to ({ docx: ['pdf', ...] }), or null when the router is down
   async function formats() {
     const s = getSettings();
@@ -143,7 +166,7 @@ function createRouterClient({ getSettings, fetchImpl = globalThis.fetch }) {
     }
   }
 
-  return { ask, reset, convert, formats };
+  return { ask, reset, convert, formats, screenAsk };
 }
 
 module.exports = { createRouterClient, SESSION };

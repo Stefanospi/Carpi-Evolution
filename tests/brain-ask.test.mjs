@@ -86,6 +86,46 @@ test('deltas are ignored when no question of hers is pending', () => {
   assert.equal(said.length, 0);
 });
 
+test('/schermo: she answers and points at what she found, with no victory pose', async () => {
+  const { brain, said, capri } = setup();
+  const pointed = [];
+  let celebrated = 0;
+  capri.celebrate = () => { celebrated += 1; };
+  capri.pointAt = async (rect, opts) => { pointed.push([rect, opts]); return true; };
+  capri.stopPointing = () => pointed.push('stop');
+  brain.setAsk(true);
+  brain.handle(prompt);
+  brain.screenTarget = { rect: { x: 5, y: 6, w: 7, h: 8 }, label: 'Salva' };
+  await brain.handle(stop);
+  assert.equal(said.at(-1).kind, 'done');
+  assert.equal(said.at(-1).hold, null);                       // the answer stays until you click it
+  assert.ok(said.at(-1).reply.includes('Ciao'));
+  assert.equal(celebrated, 0);
+  assert.deepEqual(pointed.filter((p) => p !== 'stop'), [[{ x: 5, y: 6, w: 7, h: 8 }, { label: 'Salva' }]]);
+  assert.equal(brain.screenTarget, null);                     // used once
+  brain.stopShowing();
+  assert.equal(pointed.at(-1), 'stop');
+});
+
+test('/schermo without a target: the usual answer, nothing pointed', async () => {
+  const { brain, said, capri } = setup();
+  let pointedAt = 0;
+  capri.pointAt = async () => { pointedAt += 1; return true; };
+  brain.setAsk(true);
+  brain.handle(prompt);
+  await brain.handle(stop);
+  assert.equal(said.at(-1).kind, 'done');
+  assert.equal(pointedAt, 0);
+});
+
+test('a new question stops whatever she was pointing at', () => {
+  const { brain, capri } = setup();
+  const calls = [];
+  capri.stopPointing = () => calls.push('stop');
+  brain.setAsk(true);
+  assert.deepEqual(calls, ['stop']);
+});
+
 test('a router failure clears the pending flag', () => {
   const { brain } = setup();
   brain.askPending = true;

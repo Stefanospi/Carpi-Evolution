@@ -11,6 +11,7 @@ const config = require('./config');
 const { TRAY, LANGS } = require('./labels');
 const { createBridge } = require('./bridge');
 const { createAsk } = require('./ask');
+const { createScreen } = require('./screen');
 const { startWindowWatch } = require('./windows');
 const hooks = require('../../scripts/install-hooks');
 const demoSteps = require('../../scripts/demo-sequence');
@@ -425,6 +426,8 @@ function main() {
       sendCommand,
       sendEvent: (evt) => overlay?.webContents.send('claude:event', evt),
       reveal: (file) => shell.showItemInFolder(file),
+      screen: createScreen({ getOverlayBounds: () => overlay.getBounds() }),
+      getForeground: () => lastWindows?.fg || null,
     });
     ask.register();
     createBridge({

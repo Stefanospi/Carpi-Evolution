@@ -13,6 +13,7 @@ const ASK_REPLY = {
   pt: ['Aqui está:', 'Pronto:', 'Olha só:'],
   ru: ['Вот ответ:', 'Готово:', 'Смотри:'],
 };
+const POINT_FOR_MS = 20000; // how long she keeps pointing at what she found
 const WORKING_EVERY = 20; // say something about progress every N tool calls
 const LONG_JOB_MS = 8 * 60 * 1000; // a job this long (or this busy) earns the whole satellite sequence
 const LONG_JOB_ACTIONS = 50;
@@ -28,6 +29,8 @@ export class Brain {
     this.replyFor = null;    // the session whose answer she's holding up for you
     this.linked = true;      // has a Claude Code event ever reached her (app.js sets it from the config)
     this.askPending = false; // a question typed in her own input box is out: show its answer whole
+    this.screenTarget = null; // /schermo: { rect, label } she points at when the answer lands
+    this.pointTimer = null;
     this.onLinked = null;
     this.onShowcase = null; // the demo's second half (app.js)
   }
@@ -106,6 +109,7 @@ export class Brain {
 
   // A question typed in her own box goes out (on) or comes back with nothing to show (off).
   setAsk(on) {
+    if (on) this.stopShowing(); // a new question: whatever she was pointing at is old news
     this.askPending = Boolean(on);
     this.streamShown = false;
     this.streamClosed = false;
@@ -226,11 +230,19 @@ export class Brain {
     const asked = this.askPending;
     this.askPending = false;
     const reply = asked || this.away(s) ? readable(evt.last_assistant_message || '') : '';
+    const target = this.screenTarget;
+    this.screenTarget = null;
     const done = (extra) => {
       if (reply) this.replyFor = asked ? null : s;
       if (reply) this.say('done', pick(asked ? ASK_REPLY[this.lang] || ASK_REPLY.en : this.t.reply), s, { ...extra, reply, hold: null });
       else this.say('done', pick(this.t.done), s, { ...extra, quote: clip(quote, 150) });
     };
+    // /schermo with something to point at: the answer, then her finger. No victory pose over it.
+    if (target) {
+      done({ hold: null });
+      await this.show(target);
+      return;
+    }
     if (!wasWorking && !s.count) {
       // a Stop with nothing before it: just say it quietly
       done({ hold: 8000 });
@@ -245,6 +257,19 @@ export class Brain {
     this.capri.celebrate({ onSpeak: () => done({ summary, hold: 14000 }) });
     // a long one: she'll send the red light up to the satellite once it's all quiet
     if ((s.taskStart && Date.now() - s.taskStart >= LONG_JOB_MS) || s.count >= LONG_JOB_ACTIONS) this.capri.earnUplink();
+  }
+
+  // Go and point at `target.rect` (the control she picked) and keep at it for a while.
+  async show({ rect, label }) {
+    this.stopShowing();
+    if (!(await this.capri.pointAt(rect, { label }))) return;
+    this.pointTimer = setTimeout(() => this.stopShowing(), POINT_FOR_MS);
+  }
+
+  stopShowing() {
+    clearTimeout(this.pointTimer);
+    this.pointTimer = null;
+    this.capri.stopPointing?.();
   }
 
   // Is the window you typed your prompt in (Claude's) no longer the one in front?
