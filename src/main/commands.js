@@ -69,10 +69,11 @@ async function runCommand(cmd, { client, info, failure, reveal = () => {}, scree
 // She looks at the window you were in when you opened her box, asks the router (always Claude), shows the
 // answer and points at the control it picked. The router doesn't send her "done": this does, once she knows where to point.
 async function askAboutScreen(cmd, { client, info, failure, screen, target, sendCommand, sendEvent }) {
+  const scope = cmd.scope || 'window'; // 'window' | 'apps' (what is open) | 'both'
   const hwnd = target?.();
-  if (!screen || !hwnd) return info('Click the window you want help with, then open me again and ask.');
-  info('Looking at that window…');
-  const seen = await screen.snapshot(hwnd, cmd.image);
+  if (!screen || (scope !== 'apps' && !hwnd)) return info('Click the window you want help with, then open me again and ask.');
+  info(scope === 'apps' ? 'Checking what is open…' : 'Looking at that window…');
+  const seen = await screen.snapshot(hwnd, cmd.image, scope);
   if (!seen.ok) return info(seen.error);
   sendCommand('ask', { on: true }); // the answer is shown whole
   const out = await client.screenAsk(toRequest(cmd.question, seen));

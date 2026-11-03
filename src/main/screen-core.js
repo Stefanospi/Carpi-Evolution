@@ -33,6 +33,23 @@ function parseUia(output) {
   };
 }
 
+// desktop.ps1 prints one json line: the visible windows, front first.
+// -> { ok: true, windows: [{ process, title, fg, min }] } | { ok: false, error }
+function parseWindows(output) {
+  const line = String(output || '').replace(/^\uFEFF/, '').trim().split(/\r?\n/).filter(Boolean).pop();
+  let data;
+  try {
+    data = JSON.parse(line);
+  } catch {
+    return { ok: false, error: 'I could not see what is open.' };
+  }
+  if (!data || data.ok !== true || !Array.isArray(data.windows)) return { ok: false, error: 'I could not see what is open.' };
+  const windows = data.windows
+    .filter((w) => w && (w.process || w.title))
+    .map((w) => ({ process: String(w.process || ''), title: String(w.title || ''), fg: Boolean(w.fg), min: Boolean(w.min) }));
+  return { ok: true, windows };
+}
+
 // mode: 'auto' (only when the app shows few controls) | 'always' | 'never'
 function needsImage(snapshot, mode = 'auto') {
   if (mode === 'always') return true;
@@ -67,8 +84,9 @@ function toRequest(question, snapshot) {
     question,
     window: { title: snapshot.window.title, process: snapshot.window.process },
     elements: snapshot.elements,
+    ...(snapshot.windows?.length ? { windows: snapshot.windows } : {}),
     ...(snapshot.image ? { image: snapshot.image.dataUrl, image_size: snapshot.image.size } : {}),
   };
 }
 
-module.exports = { parseUia, needsImage, targetToScreenRect, toRequest, INTERACTIVE, MIN_CONTROLS, POINT_BOX };
+module.exports = { parseUia, parseWindows, needsImage, targetToScreenRect, toRequest, INTERACTIVE, MIN_CONTROLS, POINT_BOX };

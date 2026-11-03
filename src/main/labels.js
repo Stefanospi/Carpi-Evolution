@@ -26,6 +26,18 @@ const TRAY = {
     hooksOn: 'Claude Code hooks: installed', hooksOff: 'Install Claude Code hooks',
     hooksRemove: 'Remove Claude Code hooks', quit: 'Quit',
   },
+  it: {
+    name: 'Italiano',
+    online: (port) => `Capri — in ascolto su ${port}`,
+    ask: 'Chiedi a Capri…',
+    teleport: 'Teletrasportati', satellite: 'Guarda il satellite', demo: 'Avvia la demo', help: 'Come funziona?',
+    show: 'Falla tornare', hide: 'Riponila',
+    size: 'Dimensione', small: 'Piccola', medium: 'Media', large: 'Grande', sound: 'Audio', mute: 'Muto',
+    soundsDir: 'Apri la cartella dei suoni personali', screen: 'Schermo', wander: 'Gira quando non succede niente',
+    possess: 'Possiedi le mie finestre', lang: 'Lingua', auto: 'Automatica (sistema)', startup: 'Avvia con Windows',
+    hooksOn: 'Hook di Claude Code: installati', hooksOff: 'Installa gli hook di Claude Code',
+    hooksRemove: 'Rimuovi gli hook di Claude Code', quit: 'Esci',
+  },
   es: {
     name: 'Español',
     online: (port) => `Capri — escuchando en ${port}`,

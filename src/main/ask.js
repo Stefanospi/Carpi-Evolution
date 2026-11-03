@@ -11,6 +11,7 @@ const path = require('node:path');
 const { BrowserWindow, ipcMain } = require('electron');
 const { createRouterClient } = require('./router-client');
 const { parseCommand, runCommand } = require('./commands');
+const { detectPcIntent } = require('./intent');
 
 const WIDTH = 620;
 const HEIGHT = 112;
@@ -84,7 +85,11 @@ function createAsk({ config, targetDisplay, sendEvent, sendCommand, reveal, scre
     const text = String(raw || '').trim();
     if (!text) return;
     const cmd = parseCommand(text); // /converti, /formati, /reset: done locally, no model, no tokens
-    if (cmd) return runCommand(cmd, { client, info, failure, reveal, screen, target: () => targetWindow, sendCommand, sendEvent });
+    const io = { client, info, failure, reveal, screen, target: () => targetWindow, sendCommand, sendEvent };
+    if (cmd) return runCommand(cmd, io);
+    // a plain question about your PC ("which apps are open?", "how do I use this program?") makes her look first
+    const scope = detectPcIntent(text);
+    if (scope) return runCommand({ kind: 'screen', question: text, image: 'auto', scope }, io);
     sendCommand('ask', { on: true }); // her next answer is shown whole, wherever you are
     // the answer is written into her panel as it arrives (at most ~12 updates a second)
     let lastDelta = 0;

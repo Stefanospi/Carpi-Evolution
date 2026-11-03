@@ -7,10 +7,12 @@
 const path = require('node:path');
 const { execFile } = require('node:child_process');
 const { desktopCapturer, screen } = require('electron');
-const { parseUia, needsImage } = require('./screen-core');
+const { parseUia, parseWindows, needsImage } = require('./screen-core');
 
 // in the installed app it sits next to the app archive (asarUnpack), where PowerShell can read it
-const SCRIPT = path.join(__dirname, 'uia.ps1').replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
+const unpacked = (file) => path.join(__dirname, file).replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
+const SCRIPT = unpacked('uia.ps1');
+const DESKTOP_SCRIPT = unpacked('desktop.ps1');
 const MAX_ELEMENTS = 200;
 const BUDGET_MS = 3500;
 const MAX_EDGE = 1568; // longest side of the screenshot sent: what the model reads well, and fewer tokens
@@ -27,6 +29,21 @@ function createScreen({ getOverlayBounds }) {
           return resolve({ ok: false, error: 'I could not look at that window.' });
         }
         resolve(parseUia(stdout));
+      });
+    });
+  }
+
+  // Every visible window (process and title), front first, without Capri herself.
+  function listWindows() {
+    return new Promise((resolve) => {
+      execFile('powershell.exe', [
+        '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', DESKTOP_SCRIPT, String(process.pid), '40',
+      ], { windowsHide: true, timeout: 10000, maxBuffer: 2 * 1024 * 1024, encoding: 'utf8' }, (err, stdout, stderr) => {
+        if (err && !stdout) {
+          console.error('[capri] desktop:', String(stderr || err.message).trim());
+          return resolve({ ok: false, error: 'I could not see what is open.' });
+        }
+        resolve(parseWindows(stdout));
       });
     });
   }
@@ -48,13 +65,18 @@ function createScreen({ getOverlayBounds }) {
     }
   }
 
-  // -> { ok: true, window, elements, image | null } | { ok: false, error }
-  async function snapshot(hwnd, imageMode = 'auto') {
+  // scope: 'window' (the one in front: controls, maybe a picture) | 'apps' (just what is open) | 'both'
+  // -> { ok: true, window, elements, image | null, windows } | { ok: false, error }
+  async function snapshot(hwnd, imageMode = 'auto', scope = 'window') {
     if (process.platform !== 'win32') return { ok: false, error: 'Looking at windows works on Windows only for now.' };
-    const seen = await uia(hwnd);
+    const [seen, open] = await Promise.all([
+      scope === 'apps' ? { ok: true, window: { title: '', process: '', rect: [0, 0, 0, 0] }, elements: [], truncated: false } : uia(hwnd),
+      scope === 'window' ? null : listWindows(),
+    ]);
     if (!seen.ok) return seen;
-    const image = needsImage(seen, imageMode) ? await captureWindow(hwnd, seen.window.rect) : null;
-    return { ...seen, image };
+    if (open && !open.ok && scope === 'apps') return open;
+    const image = scope !== 'apps' && needsImage(seen, imageMode) ? await captureWindow(hwnd, seen.window.rect) : null;
+    return { ...seen, image, windows: open?.ok ? open.windows : [] };
   }
 
   // physical screen pixels -> the overlay's coordinates (where she points)

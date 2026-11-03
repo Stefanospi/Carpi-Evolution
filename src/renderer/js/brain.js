@@ -10,6 +10,7 @@ const ASK_REPLY = {
   en: ['Here you go:', 'Got it. Here:', 'Done. Take a look:'],
   fr: ['Voilà :', 'Voici ta réponse :', 'C’est fait :'],
   es: ['Aquí tienes:', 'Listo:', 'Mira esto:'],
+  it: ['Ecco qui:', 'Fatto. Guarda:', 'Preso. Eccoti:'],
   pt: ['Aqui está:', 'Pronto:', 'Olha só:'],
   ru: ['Вот ответ:', 'Готово:', 'Смотри:'],
 };

@@ -198,7 +198,7 @@ function rebuildTray() {
     { label: t.teleport, click: () => sendCommand('teleport') },
     { label: t.satellite, click: () => sendCommand('satellite') },
     { label: t.demo, click: playDemo },
-    { label: `Ask the router…  (${cfg.askShortcut})`, click: () => ask?.toggle() },
+    { label: `${t.ask || 'Ask the router…'}  (${cfg.askShortcut})`, click: () => ask?.toggle() },
     { label: t.help, click: () => sendCommand('welcome') },
     { label: cfg.visible ? t.hide : t.show, accelerator: 'Ctrl+Alt+C', click: () => toggleVisible() },
     { type: 'separator' },
